@@ -1,0 +1,5 @@
+{
+  "name": "Restaurant Reservation System",
+  "description": "A web application for managing restaurant table reservations. Users can configure table types and numbers, view availability for specific days (Tuesdays and Thursdays), and make reservations. Reservations can be made by designated individuals for a group of attendees, with an option to 'close' a table to further bookings while allowing the reserver to add more guests later.",
+  "requestFramePermissions": []
+}
