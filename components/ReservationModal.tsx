@@ -43,7 +43,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
   };
 
   const removeAttendee = (idToRemove: string) => {
-    setAttendeeIds(prevIds => prevIds.filter(id => id !== idToRemove));
+    setAttendeeIds((prevIds: string[]) => prevIds.filter((id: string) => id !== idToRemove));
   };
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -61,13 +61,13 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
       return;
     }
 
-    const reservationsOnSameDate = allReservations.filter(
-      r => r.date === date && r.id !== (existingReservation?.id || '')
+    const reservationsOnSameDate: Reservation[] = allReservations.filter(
+      (r: Reservation) => r.date === date && r.id !== (existingReservation?.id || '')
     );
 
     for (const aid of attendeeIds) {
-      const person = attendablePeople.find(p => p.id === aid);
-      if (reservationsOnSameDate.some(r => r.attendeeIds.includes(aid))) {
+      const person: Person | undefined = attendablePeople.find((p: Person) => p.id === aid);
+      if (reservationsOnSameDate.some((r: Reservation) => r.attendeeIds.includes(aid))) {
         addNotification('error', `L'assistent ${person?.name || aid} ja té una altra reserva per a aquest dia (${new Date(date + 'T00:00:00').toLocaleDateString('ca-ES')}).`);
         return;
       }

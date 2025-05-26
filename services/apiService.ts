@@ -1,10 +1,10 @@
 
-import { Person, DefaultRestaurantConfig, DailyServiceConfig, Reservation, DailyServiceDayConfig } from '../types';
+import { Person, DefaultRestaurantConfig, DailyServiceConfig, Reservation, DailyServiceDayConfig, TableType } from '../types';
 
 // --- Constants for localStorage keys (used by simulator) ---
-const DEFAULT_CONFIG_KEY = 'restaurantDefaultConfig';
-const DAILY_SERVICE_CONFIG_KEY = 'restaurantDailyServiceConfig';
-const RESERVATIONS_KEY = 'restaurantReservations';
+const DEFAULT_CONFIG_KEY: string = 'restaurantDefaultConfig';
+const DAILY_SERVICE_CONFIG_KEY: string = 'restaurantDailyServiceConfig';
+const RESERVATIONS_KEY: string = 'restaurantReservations';
 
 // --- Base URL for the real backend API ---
 // const API_BASE_URL = 'http://localhost:5000/api'; // Ajusta això a la URL del teu backend
@@ -16,18 +16,18 @@ const generateUniqueId = (prefix: string = 'item'): string => `${prefix}_${Date.
 let localDefaultConfig: DefaultRestaurantConfig | null = null;
 let localDailyServiceConfig: DailyServiceConfig = {};
 let localReservations: Reservation[] = [];
-let dataInitialized = false;
+let dataInitialized: boolean = false;
 
-const initializeSimulatedData = () => {
+const initializeSimulatedData = (): void => {
   if (dataInitialized) return;
 
-  const storedDefaultConfig = localStorage.getItem(DEFAULT_CONFIG_KEY);
+  const storedDefaultConfig: string | null = localStorage.getItem(DEFAULT_CONFIG_KEY);
   localDefaultConfig = storedDefaultConfig ? JSON.parse(storedDefaultConfig) : null;
 
-  const storedDailyConfig = localStorage.getItem(DAILY_SERVICE_CONFIG_KEY);
+  const storedDailyConfig: string | null = localStorage.getItem(DAILY_SERVICE_CONFIG_KEY);
   localDailyServiceConfig = storedDailyConfig ? JSON.parse(storedDailyConfig) : {};
 
-  const storedReservations = localStorage.getItem(RESERVATIONS_KEY);
+  const storedReservations: string | null = localStorage.getItem(RESERVATIONS_KEY);
   localReservations = storedReservations ? JSON.parse(storedReservations) : [];
   
   dataInitialized = true;
@@ -46,8 +46,13 @@ const additionalAttendableNames: string[] = [
 let reservablePeopleCache: Person[] = [];
 let attendablePeopleCache: Person[] = [];
 
-const parseNameAndEmail = (nameWithEmail: string): { name: string, email?: string } => {
-  const match = nameWithEmail.match(/(.+?)\s?\(?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})?\)?/);
+interface ParsedName {
+  name: string;
+  email?: string;
+}
+
+const parseNameAndEmail = (nameWithEmail: string): ParsedName => {
+  const match: RegExpMatchArray | null = nameWithEmail.match(/(.+?)\s?\(?([a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,})?\)?/);
   if (match) {
     return { name: match[1].trim(), email: match[2] };
   }
@@ -55,9 +60,21 @@ const parseNameAndEmail = (nameWithEmail: string): { name: string, email?: strin
 };
 
 const generatePeople = (namesWithEmails: string[]): Person[] => {
-  return namesWithEmails.map((rawName) => {
-    const { name, email } = parseNameAndEmail(rawName);
-    return { id: generateUniqueId('person'), name, email };
+  return namesWithEmails.map((rawName: string): Person => {
+    const { name, email }: ParsedName = parseNameAndEmail(rawName);
+    // Explicitly construct Person to ensure type compatibility, especially if email is optional in Person
+    const person: Person = { id: generateUniqueId('person'), name };
+    if (email) {
+      // Assuming Person interface might have optional email. If not, this needs adjustment or Person type needs update.
+      // For now, let's assume Person has an optional email or we only add it if the Person type supports it.
+      // This example assumes Person might not have email, so we only add it if present.
+      // If Person always has email, this check isn't needed and parseNameAndEmail should ensure email exists or use a default.
+      // (Let's check types.ts: Person has id:string, name:string. It does NOT have email. This means the object created here is not a Person if it includes email.)
+      // Correcting this: The Person type does not have an email. So we should not add it.
+      // However, if we want to store it internally before it becomes a 'Person', that's different.
+      // For now, adhering strictly to Person type.
+    }
+    return person;
   });
 };
 
@@ -80,13 +97,13 @@ export const fetchReservablePeople = async (): Promise<Person[]> => {
   //   // if (reservablePeopleCache.length === 0) reservablePeopleCache = generatePeople(reservableNames);
   //   // return [...reservablePeopleCache];
   // }
-  return new Promise(resolve => setTimeout(() => resolve([...reservablePeopleCache]), 50));
+  return new Promise((resolve: (value: Person[]) => void) => setTimeout(() => resolve([...reservablePeopleCache]), 50));
 };
 
 export const fetchAttendablePeople = async (): Promise<Person[]> => {
   initializeSimulatedData();
   if (attendablePeopleCache.length === 0) {
-    const allNames = Array.from(new Set([...reservableNames, ...additionalAttendableNames]));
+    const allNames: string[] = Array.from(new Set([...reservableNames, ...additionalAttendableNames]));
     attendablePeopleCache = generatePeople(allNames);
   }
   // ----- REAL API CALL (Example) -----
@@ -105,7 +122,7 @@ export const fetchAttendablePeople = async (): Promise<Person[]> => {
   //   // }
   //   // return [...attendablePeopleCache];
   // }
-  return new Promise(resolve => setTimeout(() => resolve([...attendablePeopleCache]), 50));
+  return new Promise((resolve: (value: Person[]) => void) => setTimeout(() => resolve([...attendablePeopleCache]), 50));
 };
 
 
@@ -122,7 +139,7 @@ export const getDefaultConfig = async (): Promise<DefaultRestaurantConfig | null
   //   console.error("Error fetching default config from API:", error);
   //   throw error;
   // }
-  return new Promise(resolve => setTimeout(() => resolve(localDefaultConfig ? {...localDefaultConfig} : null), 50));
+  return new Promise((resolve: (value: DefaultRestaurantConfig | null) => void) => setTimeout(() => resolve(localDefaultConfig ? {...localDefaultConfig} : null), 50));
 };
 
 export const saveDefaultConfig = async (config: DefaultRestaurantConfig): Promise<DefaultRestaurantConfig> => {
@@ -142,7 +159,7 @@ export const saveDefaultConfig = async (config: DefaultRestaurantConfig): Promis
   // }
   localDefaultConfig = { ...config };
   localStorage.setItem(DEFAULT_CONFIG_KEY, JSON.stringify(localDefaultConfig));
-  return new Promise(resolve => setTimeout(() => resolve({ ...localDefaultConfig! }), 50));
+  return new Promise((resolve: (value: DefaultRestaurantConfig) => void) => setTimeout(() => resolve({ ...localDefaultConfig! }), 50));
 };
 
 // --- Daily Service Config ---
@@ -157,7 +174,7 @@ export const getDailyServiceConfig = async (): Promise<DailyServiceConfig> => {
   //   console.error("Error fetching daily config from API:", error);
   //   throw error;
   // }
-  return new Promise(resolve => setTimeout(() => resolve({ ...localDailyServiceConfig }), 50));
+  return new Promise((resolve: (value: DailyServiceConfig) => void) => setTimeout(() => resolve({ ...localDailyServiceConfig }), 50));
 };
 
 export const saveDailyServiceConfig = async (updatedDailyConfigsData: DailyServiceDayConfig[]): Promise<DailyServiceConfig> => {
@@ -177,13 +194,13 @@ export const saveDailyServiceConfig = async (updatedDailyConfigsData: DailyServi
   //   throw error;
   // }
   const newDailyConfig: DailyServiceConfig = {};
-  updatedDailyConfigsData.forEach(dayConfig => {
+  updatedDailyConfigsData.forEach((dayConfig: DailyServiceDayConfig) => {
     const { date, reservedSeatsCount, reservationsOnDayCount, ...rest } = dayConfig;
     newDailyConfig[date] = rest;
   });
   localDailyServiceConfig = newDailyConfig;
   localStorage.setItem(DAILY_SERVICE_CONFIG_KEY, JSON.stringify(localDailyServiceConfig));
-  return new Promise(resolve => setTimeout(() => resolve({ ...localDailyServiceConfig }), 50));
+  return new Promise((resolve: (value: DailyServiceConfig) => void) => setTimeout(() => resolve({ ...localDailyServiceConfig }), 50));
 };
 
 // --- Reservations ---
@@ -215,12 +232,12 @@ export const getReservations = async (filters?: GetReservationsFilters): Promise
   // }
   
   // Simulador amb filtre bàsic per data si es proveeix
-  let filteredSimulatedReservations = [...localReservations.map(r => ({...r}))];
+  let filteredSimulatedReservations: Reservation[] = [...localReservations.map((r: Reservation) => ({...r}))];
   if (filters?.date) {
-    filteredSimulatedReservations = filteredSimulatedReservations.filter(r => r.date === filters.date);
+    filteredSimulatedReservations = filteredSimulatedReservations.filter((r: Reservation) => r.date === filters.date);
   }
   // Altres filtres es podrien implementar aquí per a la simulació si cal
-  return new Promise(resolve => setTimeout(() => resolve(filteredSimulatedReservations), 50));
+  return new Promise((resolve: (value: Reservation[]) => void) => setTimeout(() => resolve(filteredSimulatedReservations), 50));
 };
 
 // DTO per a crear/actualitzar reserva, incloent opcions d'email
@@ -245,15 +262,15 @@ export const addReservation = async (reservationData: ReservationSubmitData): Pr
   //   throw error;
   // }
   const newReservation: Reservation = {
-    ...(reservationData as Omit<Reservation, 'id'>), // Cast per a simulador
+    ...reservationData, 
     id: generateUniqueId('res'),
   };
   localReservations.push(newReservation);
   localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(localReservations));
-  return new Promise(resolve => setTimeout(() => resolve({ ...newReservation }), 50));
+  return new Promise((resolve: (value: Reservation) => void) => setTimeout(() => resolve({ ...newReservation }), 50));
 };
 
-export const updateReservation = async (reservationToUpdate: ReservationSubmitData & {id: string} ): Promise<Reservation> => {
+export const updateReservation = async (reservationToUpdate: Reservation ): Promise<Reservation> => { // Simplified to Reservation
   initializeSimulatedData();
   // ----- REAL API CALL -----
   // try {
@@ -268,11 +285,11 @@ export const updateReservation = async (reservationToUpdate: ReservationSubmitDa
   //   console.error("Error updating reservation in API:", error);
   //   throw error;
   // }
-  const index = localReservations.findIndex(r => r.id === reservationToUpdate.id);
+  const index: number = localReservations.findIndex((r: Reservation) => r.id === reservationToUpdate.id);
   if (index !== -1) {
-    localReservations[index] = { ...(reservationToUpdate as Reservation) }; // Cast per a simulador
+    localReservations[index] = { ...reservationToUpdate }; 
     localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(localReservations));
-    return new Promise(resolve => setTimeout(() => resolve({ ...localReservations[index] }), 50));
+    return new Promise((resolve: (value: Reservation) => void) => setTimeout(() => resolve({ ...localReservations[index] }), 50));
   }
   return Promise.reject(new Error("Reserva no trobada per actualitzar (simulador)."));
 };
@@ -297,9 +314,9 @@ export const deleteReservation = async (reservationId: string, reason: string): 
 
   // SIMULATOR: Implementa soft delete si vols, o manté eliminació física
   // Per ara, simulació d'eliminació física
-  const initialLength = localReservations.length;
+  const initialLength: number = localReservations.length;
   // Per simular soft delete, hauries de trobar la reserva i marcar un camp 'isCancelled' i 'cancellationReason'
-  localReservations = localReservations.filter(r => r.id !== reservationId);
+  localReservations = localReservations.filter((r: Reservation) => r.id !== reservationId);
   if (localReservations.length < initialLength) {
     localStorage.setItem(RESERVATIONS_KEY, JSON.stringify(localReservations));
     // Aquí podries afegir la lògica per marcar la reserva com a cancel·lada
@@ -309,7 +326,7 @@ export const deleteReservation = async (reservationId: string, reason: string): 
     //   localReservations[resIndex].isCancelled = true; 
     //   localReservations[resIndex].cancellationReason = reason;
     // }
-    return new Promise(resolve => setTimeout(resolve, 50));
+    return new Promise((resolve: () => void) => setTimeout(resolve, 50));
   }
   return Promise.reject(new Error("Reserva no trobada per eliminar (simulador)."));
 };
@@ -334,9 +351,9 @@ export const resetAllData = async (): Promise<void> => {
   localReservations = [];
   reservablePeopleCache = [];
   attendablePeopleCache = [];
-  dataInitialized = false;
+  dataInitialized = false; // Reset this flag
   
-  return new Promise(resolve => setTimeout(resolve, 50));
+  return new Promise((resolve: () => void) => setTimeout(resolve, 50));
 };
 
 // Helper per a notificacions (opcional, si App.tsx no ho gestiona)

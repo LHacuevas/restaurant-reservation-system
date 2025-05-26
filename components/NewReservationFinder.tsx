@@ -76,7 +76,7 @@ export const NewReservationFinder: React.FC<NewReservationFinderProps> = ({
       if (isActiveToday) {
         for (const table of tablesForThisDay) {
           if (table.capacity >= guests) {
-            const reservationOnTable = reservations.find(r => r.date === dateStr && r.tableId === table.id);
+            const reservationOnTable: Reservation | undefined = reservations.find((r: Reservation) => r.date === dateStr && r.tableId === table.id);
             if (preferEmptyTable) {
               if (!reservationOnTable) {
                 foundDates.add(dateStr);

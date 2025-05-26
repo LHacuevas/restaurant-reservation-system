@@ -1,15 +1,10 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Person, Reservation, Table, TableType, DefaultRestaurantConfig, DailyServiceConfig, DailyServiceDayConfig } from '../types';
+import { Person, Reservation, Table, TableType, DefaultRestaurantConfig, DailyServiceConfig, DailyServiceDayConfig, TableWithReservation } from '../types';
 import { MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING, DEFAULT_SHIFT_NAME, APP_TITLE, SUGGESTED_AVAILABLE_DAYS_OF_WEEK } from '../constants';
 import { UsersIcon, CalendarIcon, TimeIcon, PencilIcon, TrashIcon, PlusCircleIcon, TableIcon, WrenchScrewdriverIcon as ConfigIcon, InformationCircleIcon } from './icons'; 
 import type { BookingSystemProps, TableCardProps } from '../types'; 
 import { ConfirmationModal } from './ConfirmationModal';
-
-// Define the TableWithReservation interface at the module level
-interface TableWithReservation extends Table {
-  reservation?: Reservation;
-}
 
 const formatDateToYYYYMMDD = (date: Date): string => {
   return date.toISOString().split('T')[0];
@@ -52,10 +47,10 @@ const TableCard: React.FC<TableCardProps> = ({
 
   const isFullyBooked: boolean = !!reservation && (reservation.isClosedByUser || attendeeCount >= table.capacity);
 
-  const attendeeNameList = useMemo(() => {
+  const attendeeNameList = useMemo((): string[] => {
     if (!reservation) return [];
     return reservation.attendeeIds
-      .map((id: string) => attendablePeople.find(p => p.id === id)?.name)
+      .map((id: string) => attendablePeople.find((p: Person) => p.id === id)?.name)
       .filter((name): name is string => !!name); 
   }, [reservation, attendablePeople]);
 
@@ -84,7 +79,7 @@ const TableCard: React.FC<TableCardProps> = ({
             {attendeeNameList.length > 0 && (
               <div className="mt-1">
                 <p className="text-xs text-gray-700">Comensals:</p> 
-                {attendeeNameList.map((name, index) => (
+                {attendeeNameList.map((name: string, index: number) => (
                   <div key={index} className="text-xs text-gray-700 ml-2 truncate" title={name}>- {name}</div> 
                 ))}
               </div>
@@ -142,18 +137,18 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
 }) => {
   const upcomingActiveDates = useMemo((): string[] => {
     const dates: string[] = [];
-    let currentDate = new Date(); // Changed to let as it's modified
+    let currentDate: Date = new Date(); 
     currentDate.setHours(0, 0, 0, 0); 
 
-    for (let i = 0; i < (MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING * 2) + 30 && dates.length < MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING; i++) {
-      const dateStrToTest = formatDateToYYYYMMDD(currentDate);
-      const dailyConf = dailyServiceConfig[dateStrToTest];
+    for (let i: number = 0; i < (MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING * 2) + 30 && dates.length < MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING; i++) {
+      const dateStrToTest: string = formatDateToYYYYMMDD(currentDate);
+      const dailyConf: DailyServiceConfig[string] | undefined = dailyServiceConfig[dateStrToTest];
       
-      let isActiveToday = false;
+      let isActiveToday: boolean = false;
       if (dailyConf) { 
         isActiveToday = dailyConf.isActive;
       } else if (defaultConfig) { 
-        const dayOfWeek = currentDate.getDay();
+        const dayOfWeek: number = currentDate.getDay();
         isActiveToday = SUGGESTED_AVAILABLE_DAYS_OF_WEEK.includes(dayOfWeek);
       }
 
@@ -181,8 +176,8 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
 
 
   useEffect(() => {
-    let newSelectedDate = selectedDate;
-    let dateChanged = false;
+    let newSelectedDate: string = selectedDate;
+    let dateChanged: boolean = false;
 
     if (initialDate && upcomingActiveDates.includes(initialDate)) {
         if (newSelectedDate !== initialDate) {
@@ -353,7 +348,7 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
                   className="w-full md:w-auto pl-10 pr-4 py-2 border border-gray-400 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-600 text-gray-800 bg-white hover:bg-gray-50" 
                   aria-label="Selecciona una data"
                 >
-                  {upcomingActiveDates.map(dateStr => (
+                  {upcomingActiveDates.map((dateStr: string) => (
                     <option key={dateStr} value={dateStr}>
                       {new Date(dateStr + 'T00:00:00').toLocaleDateString('ca-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </option>
