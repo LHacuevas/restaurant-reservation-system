@@ -10,7 +10,7 @@ const formatDateToYYYYMMDD = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
-const generateTablesForDay = (date: string, daySpecificConfig?: Omit<DailyServiceDayConfig, 'date' | 'isActive' | 'reservedSeatsCount' | 'reservationsOnDayCount'>, defaultConfig?: DefaultRestaurantConfig): Table[] => {
+const generateTablesForDay = (date: string, daySpecificConfig?: Omit<DailyServiceDayConfig, 'date' | 'reservedSeatsCount' | 'reservationsOnDayCount'>, defaultConfig?: DefaultRestaurantConfig): Table[] => {
   const tables: Table[] = [];
   let fourSeaters = 0;
   let sixSeaters = 0;
@@ -203,7 +203,7 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
   const tablesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     
-    const dayConfigFromDaily: DailyServiceDayConfig | undefined = dailyServiceConfig[selectedDate];
+    const dayConfigFromDaily: Omit<DailyServiceDayConfig, 'date' | 'reservedSeatsCount' | 'reservationsOnDayCount'> | undefined = dailyServiceConfig[selectedDate];
     let tables: Table[];
 
     if (dayConfigFromDaily && dayConfigFromDaily.isActive) {

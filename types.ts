@@ -140,3 +140,7 @@ export interface ConfirmationModalProps {
   confirmButtonText?: string;
   cancelButtonText?: string;
 }
+
+export interface TableWithReservation extends Table {
+  reservation?: Reservation;
+}

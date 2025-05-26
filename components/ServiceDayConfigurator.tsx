@@ -133,7 +133,19 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
           </div>
 
           <div className="space-y-6">
-            {dailyConfigs.map((config: DailyServiceDayConfig) => (
+            {dailyConfigs.map((config: DailyServiceDayConfig) => {
+              const reservationsInfo = config.isActive && (config.reservationsOnDayCount ?? 0) > 0 ? (
+                  (<span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
+                      <UsersIcon className="w-3 h-3 mr-1" />
+                      {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
+                  </span>)
+              ) : null;
+
+              const noReservationsInfo = config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) ? (
+                  (<span className="text-xs text-gray-600">Cap reserva</span>) /* Text lleugerament més fosc */
+              ) : null;
+
+              return (
               <div key={config.date} className={`p-4 rounded-md border ${config.isActive ? 'bg-green-50 border-green-300' : 'bg-gray-100 border-gray-300'}`}> {/* Fons i vores més visibles */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                   <div className="flex-grow">
@@ -144,15 +156,8 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}> {/* Colors amb més contrast */}
                         {config.isActive ? 'Servei Actiu' : 'Servei Inactiu'}
                         </span>
-                        {config.isActive && (config.reservationsOnDayCount ?? 0) > 0 && (
-                             <span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
-                                <UsersIcon className="w-3 h-3 mr-1" />
-                                {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
-                            </span>
-                        )}
-                         {config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) && (
-                             <span className="text-xs text-gray-600">Cap reserva</span> {/* Text lleugerament més fosc */}
-                         )}
+                        {reservationsInfo}
+                        {noReservationsInfo}
                     </div>
                   </div>
                   <div className="mt-3 sm:mt-0 flex-shrink-0">
@@ -193,7 +198,8 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
 
           <div className="mt-8 pt-6 border-t border-gray-300 flex justify-end"> {/* Vora més visible */}
