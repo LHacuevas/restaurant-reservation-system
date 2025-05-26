@@ -84,8 +84,8 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
     onClose();
   };
   
-  const currentCapacity = table.capacity as number;
-  const selectedAttendees = attendablePeople.filter(p => attendeeIds.includes(p.id));
+  const currentCapacity: number = table.capacity; // TableType is a numeric enum, cast is redundant
+  const selectedAttendees: Person[] = attendablePeople.filter((p: Person) => attendeeIds.includes(p.id));
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-60 p-4 transition-opacity duration-300 ease-in-out" role="dialog" aria-modal="true" aria-labelledby="reservation-modal-title"> {/* Opacitat de fons lleugerament augmentada */}
@@ -127,7 +127,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
             {selectedAttendees.length > 0 && (
               <div className="mt-2 space-y-1 border border-gray-300 rounded-md p-2 max-h-32 overflow-y-auto bg-gray-50"> {/* Fons lleugerament diferent */}
                 <p className="text-xs text-gray-600 mb-1">Assistents seleccionats:</p>
-                {selectedAttendees.map(person => (
+                {selectedAttendees.map((person: Person) => (
                   <div key={person.id} className="flex items-center justify-between text-sm bg-white px-2 py-1 rounded border border-gray-200"> {/* Vora per a cada element */}
                     <span className="text-gray-800">{person.name}</span> {/* Text més fosc */}
                     <button 
@@ -155,7 +155,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
                 name="isClosedByUser"
                 type="checkbox"
                 checked={isClosedByUser}
-                onChange={(e) => setIsClosedByUser(e.target.checked)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setIsClosedByUser(e.target.checked)}
                 className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
               />
             </div>
@@ -174,7 +174,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               name="notes"
               rows={3}
               value={notes}
-              onChange={(e) => setNotes(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setNotes(e.target.value)}
               className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
               placeholder="Qualsevol petició especial o detall..."
             />

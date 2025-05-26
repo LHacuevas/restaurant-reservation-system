@@ -26,11 +26,11 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
   required = false,
   disabled = false,
 }) => {
-  const [isOpen, setIsOpen] = useState(false);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [isOpen, setIsOpen] = useState<boolean>(false);
+  const [searchTerm, setSearchTerm] = useState<string>('');
   const wrapperRef = useRef<HTMLDivElement>(null);
 
-  const filteredPeople = people.filter(person =>
+  const filteredPeople: Person[] = people.filter((person: Person) =>
     person.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -65,22 +65,22 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
     }
   };
 
-  const getButtonLabel = () => {
+  const getButtonLabel = (): string => {
     if (allowMultiple) {
-      const numSelected = selectedPersonIds?.length || 0;
+      const numSelected: number = selectedPersonIds?.length || 0;
       if (numSelected === 0) return `Selecciona ${label.toLowerCase()}...`;
       if (numSelected === 1 && selectedPersonIds) {
-         const person = people.find(p => p.id === selectedPersonIds[0]);
+         const person: Person | undefined = people.find(p => p.id === selectedPersonIds[0]);
          return person ? person.name : `${numSelected} seleccionat/s`;
       }
       return `${numSelected} seleccionat/s`;
     } else { // Single select mode
-      const person = people.find(p => p.id === selectedPersonId);
+      const person: Person | undefined = people.find(p => p.id === selectedPersonId);
       return person ? person.name : `Selecciona ${label.toLowerCase()}...`;
     }
   };
 
-  const isSelected = (personId: string) => {
+  const isSelected = (personId: string): boolean => {
     if (allowMultiple) {
       return selectedPersonIds?.includes(personId) || false;
     }
@@ -115,7 +115,7 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
                     type="text"
                     placeholder="Cerca..."
                     value={searchTerm}
-                    onChange={(e) => setSearchTerm(e.target.value)}
+                    onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                     className="w-full px-2 py-1 border border-gray-300 rounded-md text-sm"
                 />
             </div>
@@ -123,7 +123,7 @@ export const PersonSelector: React.FC<PersonSelectorProps> = ({
           {filteredPeople.length === 0 && searchTerm && (
             <div className="px-3 py-2 text-sm text-gray-500">No s'han trobat coincidències.</div>
           )}
-          {filteredPeople.map(person => (
+          {filteredPeople.map((person: Person) => (
             <div
               key={person.id}
               onClick={() => handleSelect(person.id)}

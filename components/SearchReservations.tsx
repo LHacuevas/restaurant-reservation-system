@@ -7,8 +7,8 @@ import type { SearchReservationsProps } from '../types';
 
 
 const getTableNameFromId = (tableId: string, date: string, dailyConfig: DailyServiceConfig, defaultConfig: DefaultRestaurantConfig | null): string => {
-    const dayConf = dailyConfig[date];
-    const configToUse = dayConf?.isActive ? dayConf : defaultConfig;
+    const dayConf: DailyServiceConfig[string] | undefined = dailyConfig[date];
+    const configToUse: DefaultRestaurantConfig | DailyServiceConfig[string] | null | undefined = dayConf?.isActive ? dayConf : defaultConfig;
 
     if (configToUse) {
         const parts = tableId.split('_'); 
@@ -39,29 +39,29 @@ export const SearchReservations: React.FC<SearchReservationsProps> = ({
   const [searchDate, setSearchDate] = useState<string>('');
   const [searchPerformed, setSearchPerformed] = useState<boolean>(false);
 
-  const allPeopleMap = useMemo(() => {
+  const allPeopleMap = useMemo((): Map<string, string> => {
     const map = new Map<string, string>();
-    reservablePeople.forEach(p => map.set(p.id, p.name));
-    attendablePeople.forEach(p => map.set(p.id, p.name)); 
+    reservablePeople.forEach((p: Person) => map.set(p.id, p.name));
+    attendablePeople.forEach((p: Person) => map.set(p.id, p.name)); 
     return map;
   }, [reservablePeople, attendablePeople]);
 
-  const filteredReservations = useMemo(() => {
+  const filteredReservations = useMemo((): Reservation[] => {
     if (!searchPerformed) return [];
     if (!searchTerm && !searchDate) return []; 
 
-    return reservations.filter(res => {
-      let matchName = true;
+    return reservations.filter((res: Reservation) => {
+      let matchName: boolean = true;
       if (searchTerm) {
-        const lowerSearchTerm = searchTerm.toLowerCase();
-        const reservedByName = allPeopleMap.get(res.reservedById)?.toLowerCase();
-        const attendeesNames = res.attendeeIds.map(id => allPeopleMap.get(id)?.toLowerCase());
+        const lowerSearchTerm: string = searchTerm.toLowerCase();
+        const reservedByName: string | undefined = allPeopleMap.get(res.reservedById)?.toLowerCase();
+        const attendeesNames: (string | undefined)[] = res.attendeeIds.map((id: string) => allPeopleMap.get(id)?.toLowerCase());
         
         matchName = (reservedByName?.includes(lowerSearchTerm) || 
-                     attendeesNames.some(name => name?.includes(lowerSearchTerm))) ?? false;
+                     attendeesNames.some((name?: string) => name?.includes(lowerSearchTerm))) ?? false;
       }
       
-      let matchDate = true;
+      let matchDate: boolean = true;
       if (searchDate) {
         matchDate = res.date === searchDate;
       }
@@ -98,7 +98,7 @@ export const SearchReservations: React.FC<SearchReservationsProps> = ({
                   type="text"
                   id="searchTerm"
                   value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchTerm(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-600 sm:text-sm text-gray-900" /* Vora i text més foscos */
                   placeholder="p.ex., Ana Pérez"
                 />
@@ -109,7 +109,7 @@ export const SearchReservations: React.FC<SearchReservationsProps> = ({
                   type="date"
                   id="searchDate"
                   value={searchDate}
-                  onChange={(e) => setSearchDate(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSearchDate(e.target.value)}
                   className="mt-1 block w-full px-3 py-2 border border-gray-400 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-600 sm:text-sm text-gray-900" /* Vora i text més foscos */
                 />
               </div>
@@ -128,7 +128,7 @@ export const SearchReservations: React.FC<SearchReservationsProps> = ({
               <h2 className="text-2xl font-semibold text-gray-900 mb-4">Resultats ({filteredReservations.length}):</h2> {/* Text més fosc */}
               {filteredReservations.length > 0 ? (
                 <ul className="space-y-4">
-                  {filteredReservations.map(res => (
+                  {filteredReservations.map((res: Reservation) => (
                     <li key={res.id} className="p-4 border border-gray-300 rounded-md shadow-sm bg-white hover:shadow-lg transition-shadow"> {/* Vora més visible */}
                       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-2">
                         <div>
@@ -158,7 +158,7 @@ export const SearchReservations: React.FC<SearchReservationsProps> = ({
                       </div>
                       <div className="text-sm space-y-1 mt-1 pt-2 border-t border-gray-300 text-gray-800"> {/* Text més fosc per defecte */}
                         <p><span className="font-medium text-gray-900">Feta per:</span> {allPeopleMap.get(res.reservedById) || 'Desconegut'}</p>
-                        <p><span className="font-medium text-gray-900">Assistents ({res.attendeeIds.length}):</span> {res.attendeeIds.map(id => allPeopleMap.get(id) || 'Desconegut').join(', ')}</p>
+                        <p><span className="font-medium text-gray-900">Assistents ({res.attendeeIds.length}):</span> {res.attendeeIds.map((id: string) => allPeopleMap.get(id) || 'Desconegut').join(', ')}</p>
                         {res.isClosedByUser && <p className="text-red-700 font-medium">Taula tancada per l'usuari.</p>} {/* Text més fosc */}
                         {res.notes && <p><span className="font-medium text-gray-900">Notes:</span> <span className="italic">{res.notes}</span></p>}
                       </div>
