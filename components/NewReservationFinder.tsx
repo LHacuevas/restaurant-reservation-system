@@ -117,7 +117,7 @@ export const NewReservationFinder: React.FC<NewReservationFinderProps> = ({
                   type="number"
                   id="numGuests"
                   value={numGuests}
-                  onChange={(e) => setNumGuests(e.target.value)}
+                  onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNumGuests(e.target.value)}
                   min="1"
                   max="20" 
                   required
@@ -130,7 +130,7 @@ export const NewReservationFinder: React.FC<NewReservationFinderProps> = ({
                       id="preferEmptyTable"
                       type="checkbox"
                       checked={preferEmptyTable}
-                      onChange={(e) => setPreferEmptyTable(e.target.checked)}
+                      onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPreferEmptyTable(e.target.checked)}
                       className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-600"
                   />
                   </div>
@@ -152,7 +152,7 @@ export const NewReservationFinder: React.FC<NewReservationFinderProps> = ({
             <div className="space-y-3">
               <h2 className="text-2xl font-semibold text-gray-800">Dies amb Disponibilitat:</h2>
               <ul className="space-y-2">
-                {availableDates.map((date) => (
+                {availableDates.map((date: string) => (
                   <li key={date}>
                     <button
                       onClick={() => onViewDayAvailability(date, parseInt(numGuests, 10))}

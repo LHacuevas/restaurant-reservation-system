@@ -52,7 +52,7 @@ export const RestaurantSetup: React.FC<RestaurantSetupProps> = ({ onConfigSubmit
               type="number"
               id="fourSeaters"
               value={fourSeaters}
-              onChange={(e) => setFourSeaters(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setFourSeaters(e.target.value)}
               min="0"
               max="30"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
@@ -67,7 +67,7 @@ export const RestaurantSetup: React.FC<RestaurantSetupProps> = ({ onConfigSubmit
               type="number"
               id="sixSeaters"
               value={sixSeaters}
-              onChange={(e) => setSixSeaters(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setSixSeaters(e.target.value)}
               min="0"
               max="20"
               className="w-full px-4 py-3 border border-gray-300 rounded-lg shadow-sm focus:ring-indigo-500 focus:border-indigo-500 text-lg"
