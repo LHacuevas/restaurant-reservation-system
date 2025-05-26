@@ -151,7 +151,7 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                             </span>
                         )}
                          {config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) && (
-                             <span className="text-xs text-gray-600">Cap reserva</span> {/* Text lleugerament més fosc */}
+                             <span className="text-xs text-gray-600">Cap reserva</span>
                          )}
                     </div>
                   </div>
