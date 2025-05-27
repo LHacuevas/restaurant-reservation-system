@@ -157,6 +157,7 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}> {/* Colors amb més contrast */}
                         {config.isActive ? 'Servei Actiu' : 'Servei Inactiu'}
                         </span>
+
                         {reservationsInfo}
                         {noReservationsInfo}
                     </div>
