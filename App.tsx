@@ -36,9 +36,9 @@ const App: React.FC = () => {
 
   const addNotification = useCallback((type: 'success' | 'error' | 'info', message: string) => {
     const newNotification = { id: Date.now(), type, message };
-    setNotifications(prev => [newNotification, ...prev.slice(0, 2)]); 
+    setNotifications((prev: NotificationMessage[]) => [newNotification, ...prev.slice(0, 2)]); 
     setTimeout(() => {
-      setNotifications(prev => prev.filter(n => n.id !== newNotification.id));
+      setNotifications((prev: NotificationMessage[]) => prev.filter(n => n.id !== newNotification.id));
     }, 5000);
   }, []);
 
@@ -48,7 +48,19 @@ const App: React.FC = () => {
       setIsLoading(true);
       try {
         // await apiService.initializeData(); // Ensure initialized if not done by individual calls
-        const [defConfig, dailyConf, reservs, resPeople, attPeople] = await Promise.all([
+        const [
+            defConfig, 
+            dailyConf, 
+            reservs, 
+            resPeople, 
+            attPeople
+        ]: [
+            DefaultRestaurantConfig | null, 
+            DailyServiceConfig, 
+            Reservation[], 
+            Person[], 
+            Person[]
+        ] = await Promise.all([
           apiService.getDefaultConfig(),
           apiService.getDailyServiceConfig(),
           apiService.getReservations(),
@@ -73,7 +85,7 @@ const App: React.FC = () => {
             setCurrentView(lastView || 'booking');
         }
 
-      } catch (err) {
+      } catch (err: unknown) {
         console.error("Error en carregar dades inicials:", err);
         const errorMessage = err instanceof Error ? err.message : "No s'han pogut carregar les dades.";
         setError(`No s'han pogut carregar les dades necessàries: ${errorMessage}`);
@@ -101,7 +113,7 @@ const App: React.FC = () => {
       setDefaultTableConfig(savedConfig);
       addNotification('success', 'Configuració per defecte del restaurant desada!');
       setCurrentView('configureServiceDays'); 
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification('error', 'Error en desar la configuració per defecte.');
     } finally {
       setIsLoading(false);
@@ -114,7 +126,7 @@ const App: React.FC = () => {
       const savedDailyConfig = await apiService.saveDailyServiceConfig(updatedDailyConfigsData);
       setDailyServiceConfig(savedDailyConfig);
       addNotification('success', 'Configuració diària desada correctament!');
-    } catch (err) {
+    } catch (err: unknown) {
       addNotification('error', 'Error en desar la configuració diària.');
     } finally {
       setIsLoading(false);
@@ -133,7 +145,7 @@ const App: React.FC = () => {
             addNotification('info', 'Aplicació restablerta.');
             setCurrentView('setup');
             localStorage.removeItem('lastAppView');
-        } catch (err) {
+        } catch (err: unknown) {
             addNotification('error', 'Error en restablir l\'aplicació.');
         } finally {
             setIsLoading(false);
@@ -148,19 +160,19 @@ const App: React.FC = () => {
   };
 
   const handleOpenModalForEdit = (reservation: Reservation) => {
-    const dayConf = dailyServiceConfig[reservation.date];
+    const dayConf: DailyServiceConfig[string] | undefined = dailyServiceConfig[reservation.date];
     // Use current defaultTableConfig from state
-    const effectiveDefaultConfig = defaultTableConfig; 
-    const configForTableGeneration = dayConf?.isActive ? dayConf : effectiveDefaultConfig;
+    const effectiveDefaultConfig: DefaultRestaurantConfig | null = defaultTableConfig; 
+    const configForTableGeneration: DailyServiceConfig[string] | DefaultRestaurantConfig | null | undefined = dayConf?.isActive ? dayConf : effectiveDefaultConfig;
 
-    let tableCapacity = TableType.FOUR_SEATER; 
-    let tableNameSuffix = "";
-    let tableNamePrefix ="Taula";
+    let tableCapacity: TableType = TableType.FOUR_SEATER; 
+    let tableNameSuffix: string = "";
+    let tableNamePrefix: string ="Taula";
 
     if (configForTableGeneration) { 
-        const tableIdParts = reservation.tableId.split('_'); 
-        const typePart = tableIdParts.length > 1 ? tableIdParts[1] : ""; 
-        const indexPart = tableIdParts.length > 2 ? tableIdParts[2] : "";
+        const tableIdParts: string[] = reservation.tableId.split('_'); 
+        const typePart: string = tableIdParts.length > 1 ? tableIdParts[1] : ""; 
+        const indexPart: string = tableIdParts.length > 2 ? tableIdParts[2] : "";
 
         if (typePart.startsWith('4s')) {
             tableCapacity = TableType.FOUR_SEATER;
@@ -170,13 +182,13 @@ const App: React.FC = () => {
             tableNameSuffix = `S${indexPart}`;
         } else { 
            tableNamePrefix = reservation.tableId.split(' (')[0]; // Get name before capacity
-           const nameMatch = reservation.tableId.match(/\((\d+)p\)/);
+           const nameMatch: RegExpMatchArray | null = reservation.tableId.match(/\((\d+)p\)/);
            if (nameMatch && nameMatch[1]) {
              tableCapacity = parseInt(nameMatch[1], 10) as TableType;
            }
         }
     } else { // Fallback if no config, try to parse from tableId itself (less reliable)
-        const nameMatch = reservation.tableId.match(/\((\d+)p\)/);
+        const nameMatch: RegExpMatchArray | null = reservation.tableId.match(/\((\d+)p\)/);
         if (nameMatch && nameMatch[1]) {
            tableCapacity = parseInt(nameMatch[1], 10) as TableType;
         }
@@ -204,19 +216,19 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
       if (editingReservation) { 
-          const updatedReservationData = { ...reservationDetails, id: editingReservation.id };
-          const updatedRes = await apiService.updateReservation(updatedReservationData);
-          setReservations(prev => 
-              prev.map(r => r.id === updatedRes.id ? updatedRes : r)
+          const updatedReservationData: Reservation = { ...reservationDetails, id: editingReservation.id };
+          const updatedRes: Reservation = await apiService.updateReservation(updatedReservationData);
+          setReservations((prev: Reservation[]) => 
+              prev.map((r: Reservation) => r.id === updatedRes.id ? updatedRes : r)
           );
           addNotification('success', `Reserva per a ${currentReservationTarget?.table.name} actualitzada.`);
       } else { 
-          const newReservation = await apiService.addReservation(reservationDetails);
-          setReservations(prev => [...prev, newReservation]);
+          const newReservation: Reservation = await apiService.addReservation(reservationDetails);
+          setReservations((prev: Reservation[]) => [...prev, newReservation]);
           addNotification('success', `Taula ${currentReservationTarget?.table.name} reservada!`);
       }
       handleCloseModal();
-    } catch (err) {
+    } catch (err: unknown) {
        addNotification('error', `Error en desar la reserva: ${err instanceof Error ? err.message : 'Error desconegut'}`);
     } finally {
       setIsLoading(false);
@@ -227,9 +239,9 @@ const App: React.FC = () => {
     setIsLoading(true);
     try {
         await apiService.deleteReservation(reservationId, reason || 'No especificat');
-        setReservations(prev => prev.filter(r => r.id !== reservationId));
+        setReservations((prev: Reservation[]) => prev.filter(r => r.id !== reservationId));
         addNotification('info', `Reserva eliminada. Motiu: ${reason || 'No especificat'}.`);
-    } catch (err) {
+    } catch (err: unknown) {
         addNotification('error', `Error en eliminar la reserva: ${err instanceof Error ? err.message : 'Error desconegut'}`);
     } finally {
         setIsLoading(false);
@@ -240,7 +252,8 @@ const App: React.FC = () => {
     setSelectedDateForBookingSystem(date); 
     setNumGuestsForBookingSystem(numGuests);
     setCurrentView('booking'); 
-    let message = `Mostrant reserves per al ${new Date(date+'T00:00:00').toLocaleDateString('ca-ES', { day: 'numeric', month: 'long' })}`;
+    const displayDate: Date = new Date(date+'T00:00:00');
+    let message: string = `Mostrant reserves per al ${displayDate.toLocaleDateString('ca-ES', { day: 'numeric', month: 'long' })}`;
     if (numGuests) {
         message += ` (cerca per a ${numGuests} comensal${numGuests > 1 ? 's' : ''})`;
     }
@@ -260,14 +273,14 @@ const App: React.FC = () => {
     return <div className="min-h-screen flex items-center justify-center bg-red-50 p-4"><p className="text-xl text-red-600">{error}</p></div>;
   }
   
-  const NotificationArea: React.FC = () => (
+  const NotificationArea: React.FC<{}> = () => (
     <div className="fixed top-4 right-4 z-[100] w-full max-w-xs space-y-3">
-      {notifications.map(notif => {
-        let bgColor, textColor, IconComponent;
+      {notifications.map((notif: NotificationMessage) => {
+        let bgColor: string, textColor: string, IconComponent: React.ElementType;
         switch (notif.type) {
           case 'success': bgColor = 'bg-green-600'; textColor = 'text-white'; IconComponent = CheckCircleIcon; break;
           case 'error': bgColor = 'bg-red-600'; textColor = 'text-white'; IconComponent = XCircleIcon; break;
-          default: bgColor = 'bg-blue-600'; textColor = 'text-white'; IconComponent = InformationCircleIcon; break;
+          default: bgColor = 'bg-blue-600'; textColor = 'text-white'; IconComponent = InformationCircleIcon; break; // 'info' or other types
         }
         return (
           <div key={notif.id} className={`${bgColor} ${textColor} p-3 rounded-md shadow-lg flex items-start space-x-2 animate-fadeInOut`}>
@@ -290,7 +303,7 @@ const App: React.FC = () => {
     </div>
   );
 
-  const renderView = () => {
+  const renderView = (): JSX.Element | null => {
     if (isLoading && defaultTableConfig) { // Loading indicator if core config is loaded but other data might be fetching
         // Could be a subtle top bar loader, or just let components handle their specific loading if any
     }
@@ -304,6 +317,8 @@ const App: React.FC = () => {
                   defaultConfig={defaultTableConfig} 
                   existingDailyConfig={dailyServiceConfig} 
                   reservations={reservations}
+                  reservablePeople={reservablePeople} 
+                  attendablePeople={attendablePeople} 
                   onSave={handleDailyServiceConfigSave} 
                   onResetApp={handleResetApp}
                   addNotification={addNotification}
@@ -357,7 +372,13 @@ const App: React.FC = () => {
     }
   };
   
-  const NavButton: React.FC<{ view: AppView; label: string; icon?: React.ReactNode }> = ({ view, label, icon }) => (
+  interface NavButtonProps {
+    view: AppView;
+    label: string;
+    icon?: React.ReactNode;
+  }
+
+  const NavButton: React.FC<NavButtonProps> = ({ view, label, icon }) => (
     <button
         onClick={() => {
           if (view === 'booking') {

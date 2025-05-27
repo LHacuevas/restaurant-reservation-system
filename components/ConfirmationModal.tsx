@@ -13,7 +13,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
   confirmButtonText = "Confirmar",
   cancelButtonText = "Cancel·lar",
 }) => {
-  const [reason, setReason] = useState('');
+  const [reason, setReason] = useState<string>('');
 
   useEffect(() => {
     if (isOpen) {
@@ -52,7 +52,7 @@ export const ConfirmationModal: React.FC<ConfirmationModalProps> = ({
             <textarea
               id="confirmation-reason"
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
+              onChange={(e: React.ChangeEvent<HTMLTextAreaElement>) => setReason(e.target.value)}
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
               placeholder="Introduïu el motiu aquí..."

@@ -16,6 +16,7 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
   addNotification,
 }) => {
   const [dailyConfigs, setDailyConfigs] = useState<DailyServiceDayConfig[]>([]);
+  const [selectedDayForDetails, setSelectedDayForDetails] = useState<DailyServiceDayConfig | null>(null);
 
   useEffect(() => {
     const today = new Date();
@@ -25,11 +26,11 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
     for (let i = 0; i < MAX_UPCOMING_DAYS_TO_SHOW_IN_CONFIG; i++) {
       const date = new Date(today);
       date.setDate(today.getDate() + i);
-      const dateStr = formatDateToYYYYMMDD(date);
-      const existing = existingDailyConfig[dateStr];
+      const dateStr: string = formatDateToYYYYMMDD(date);
+      const existing: Omit<DailyServiceDayConfig, "date" | "reservedSeatsCount" | "reservationsOnDayCount"> | undefined = existingDailyConfig[dateStr];
 
-      const reservationsOnThisDay = reservations.filter(r => r.date === dateStr);
-      const reservedSeats = reservationsOnThisDay.reduce((sum, r) => sum + r.attendeeIds.length, 0);
+      const reservationsOnThisDay: Reservation[] = reservations.filter((r: Reservation) => r.date === dateStr);
+      const reservedSeats: number = reservationsOnThisDay.reduce((sum: number, r: Reservation) => sum + r.attendeeIds.length, 0);
       
       if (existing) {
         initialConfigs.push({
@@ -69,16 +70,16 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
     }
 
     if ((field === 'fourSeaterTables' || field === 'sixSeaterTables')) {
-        const numericValue = Number(value);
-        const originalTableCount = currentConfig[field as 'fourSeaterTables' | 'sixSeaterTables'];
+        const numericValue: number = Number(value);
+        const originalTableCount: number = currentConfig[field as 'fourSeaterTables' | 'sixSeaterTables'];
 
         if (numericValue < originalTableCount) {
-            const tableType = field === 'fourSeaterTables' ? TableType.FOUR_SEATER : TableType.SIX_SEATER;
-            const capacityChar = field === 'fourSeaterTables' ? 'F' : 'S';
+            const tableType: TableType = field === 'fourSeaterTables' ? TableType.FOUR_SEATER : TableType.SIX_SEATER;
+            const capacityChar: string = field === 'fourSeaterTables' ? 'F' : 'S';
             
-            for (let i = numericValue + 1; i <= originalTableCount; i++) {
-                const tableIdToCheck = `${date}_${tableType === TableType.FOUR_SEATER ? '4s' : '6s'}_${i}`;
-                const hasReservation = reservations.some(r => r.tableId === tableIdToCheck && r.date === date);
+            for (let i: number = numericValue + 1; i <= originalTableCount; i++) {
+                const tableIdToCheck: string = `${date}_${tableType === TableType.FOUR_SEATER ? '4s' : '6s'}_${i}`;
+                const hasReservation: boolean = reservations.some((r: Reservation) => r.tableId === tableIdToCheck && r.date === date);
                 if (hasReservation) {
                     addNotification('error', `No es pot reduir el nombre de taules de ${tableType} persones. La taula ${capacityChar}${i} té una reserva.`);
                     return; 
@@ -87,17 +88,17 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
         }
     }
 
-    setDailyConfigs(prevConfigs =>
-      prevConfigs.map(config =>
+    setDailyConfigs((prevConfigs: DailyServiceDayConfig[]) =>
+      prevConfigs.map((config: DailyServiceDayConfig) =>
         config.date === date ? { ...config, [field]: value } : config
       )
     );
   };
 
   const handleSaveChanges = () => {
-    const updatedConfigsWithCounts = dailyConfigs.map(dc => {
-        const reservationsOnThisDay = reservations.filter(r => r.date === dc.date);
-        const reservedSeats = reservationsOnThisDay.reduce((sum, r) => sum + r.attendeeIds.length, 0);
+    const updatedConfigsWithCounts: DailyServiceDayConfig[] = dailyConfigs.map((dc: DailyServiceDayConfig) => {
+        const reservationsOnThisDay: Reservation[] = reservations.filter((r: Reservation) => r.date === dc.date);
+        const reservedSeats: number = reservationsOnThisDay.reduce((sum: number, r: Reservation) => sum + r.attendeeIds.length, 0);
         return {
             ...dc,
             reservedSeatsCount: reservedSeats,
@@ -133,7 +134,19 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
           </div>
 
           <div className="space-y-6">
-            {dailyConfigs.map(config => (
+            {dailyConfigs.map((config: DailyServiceDayConfig) => {
+              const reservationsInfo = config.isActive && (config.reservationsOnDayCount ?? 0) > 0 ? (
+                  (<span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
+                      <UsersIcon className="w-3 h-3 mr-1" />
+                      {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
+                  </span>)
+              ) : null;
+
+              const noReservationsInfo = config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) ? (
+                  (<span className="text-xs text-gray-600">Cap reserva</span>) /* Text lleugerament més fosc */
+              ) : null;
+
+              return (
               <div key={config.date} className={`p-4 rounded-md border ${config.isActive ? 'bg-green-50 border-green-300' : 'bg-gray-100 border-gray-300'}`}> {/* Fons i vores més visibles */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                   <div className="flex-grow">
@@ -144,15 +157,9 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}> {/* Colors amb més contrast */}
                         {config.isActive ? 'Servei Actiu' : 'Servei Inactiu'}
                         </span>
-                        {config.isActive && (config.reservationsOnDayCount ?? 0) > 0 && (
-                             <span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
-                                <UsersIcon className="w-3 h-3 mr-1" />
-                                {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
-                            </span>
-                        )}
-                         {config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) && (
-                             <span className="text-xs text-gray-600">Cap reserva</span> {/* Text lleugerament més fosc */}
-                         )}
+
+                        {reservationsInfo}
+                        {noReservationsInfo}
                     </div>
                   </div>
                   <div className="mt-3 sm:mt-0 flex-shrink-0">
@@ -162,6 +169,14 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                       aria-label={config.isActive ? 'Desactivar servei per aquest dia' : 'Activar servei per aquest dia'}
                     >
                       {config.isActive ? <CheckCircleIcon className="w-5 h-5" /> : <XCircleIcon className="w-5 h-5" />}
+                    </button>
+                    <button
+                      onClick={() => setSelectedDayForDetails(config)}
+                      className="ml-2 p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                      aria-label="Veure detalls del dia"
+                    >
+                      {/* Podrías usar un icono aquí si quieres, ej. <EyeIcon className="w-5 h-5" /> */}
+                      Detalls
                     </button>
                   </div>
                 </div>
@@ -175,7 +190,7 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         id={`four-${config.date}`}
                         value={config.fourSeaterTables}
                         min="0" max="30"
-                        onChange={e => handleDayConfigChange(config.date, 'fourSeaterTables', parseInt(e.target.value, 10))}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDayConfigChange(config.date, 'fourSeaterTables', parseInt(e.target.value, 10))}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     </div>
@@ -186,15 +201,34 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         id={`six-${config.date}`}
                         value={config.sixSeaterTables}
                          min="0" max="20"
-                        onChange={e => handleDayConfigChange(config.date, 'sixSeaterTables', parseInt(e.target.value, 10))}
+                        onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleDayConfigChange(config.date, 'sixSeaterTables', parseInt(e.target.value, 10))}
                         className="mt-1 w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm"
                       />
                     </div>
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
+
+          {selectedDayForDetails && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
+                <h2 className="text-xl font-bold mb-4">
+                  Detalls del Dia: {new Date(selectedDayForDetails.date + 'T00:00:00').toLocaleDateString('ca-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </h2>
+                {/* Aquí irá el contenido del DayDetailsModal */}
+                <p>Mesas y reservas aparecerán aquí...</p>
+                <button
+                  onClick={() => setSelectedDayForDetails(null)}
+                  className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Tancar
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 pt-6 border-t border-gray-300 flex justify-end"> {/* Vora més visible */}
             <button

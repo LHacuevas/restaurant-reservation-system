@@ -1,17 +1,16 @@
 
 import React, { useState, useMemo, useCallback, useEffect } from 'react';
-import { Person, Reservation, Table, TableType, DefaultRestaurantConfig, DailyServiceConfig, DailyServiceDayConfig } from '../types';
+import { Person, Reservation, Table, TableType, DefaultRestaurantConfig, DailyServiceConfig, DailyServiceDayConfig, TableWithReservation } from '../types';
 import { MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING, DEFAULT_SHIFT_NAME, APP_TITLE, SUGGESTED_AVAILABLE_DAYS_OF_WEEK } from '../constants';
 import { UsersIcon, CalendarIcon, TimeIcon, PencilIcon, TrashIcon, PlusCircleIcon, TableIcon, WrenchScrewdriverIcon as ConfigIcon, InformationCircleIcon } from './icons'; 
 import type { BookingSystemProps, TableCardProps } from '../types'; 
 import { ConfirmationModal } from './ConfirmationModal';
 
-
 const formatDateToYYYYMMDD = (date: Date): string => {
   return date.toISOString().split('T')[0];
 };
 
-const generateTablesForDay = (date: string, daySpecificConfig?: Omit<DailyServiceDayConfig, 'date' | 'isActive' | 'reservedSeatsCount' | 'reservationsOnDayCount'>, defaultConfig?: DefaultRestaurantConfig): Table[] => {
+const generateTablesForDay = (date: string, daySpecificConfig?: Omit<DailyServiceDayConfig, 'date' | 'reservedSeatsCount' | 'reservationsOnDayCount'>, defaultConfig?: DefaultRestaurantConfig): Table[] => {
   const tables: Table[] = [];
   let fourSeaters = 0;
   let sixSeaters = 0;
@@ -43,15 +42,15 @@ const TableCard: React.FC<TableCardProps> = ({
   attendablePeople 
 }) => {
   
-  const reservedByPerson = reservation ? reservablePeople.find(p => p.id === reservation.reservedById) : null;
-  const attendeeCount = reservation ? reservation.attendeeIds.length : 0;
+  const reservedByPerson: Person | null = reservation ? reservablePeople.find(p => p.id === reservation.reservedById) || null : null;
+  const attendeeCount: number = reservation ? reservation.attendeeIds.length : 0;
 
-  const isFullyBooked = reservation && (reservation.isClosedByUser || attendeeCount >= table.capacity);
+  const isFullyBooked: boolean = !!reservation && (reservation.isClosedByUser || attendeeCount >= table.capacity);
 
-  const attendeeNameList = useMemo(() => {
+  const attendeeNameList = useMemo((): string[] => {
     if (!reservation) return [];
     return reservation.attendeeIds
-      .map(id => attendablePeople.find(p => p.id === id)?.name)
+      .map((id: string) => attendablePeople.find((p: Person) => p.id === id)?.name)
       .filter((name): name is string => !!name); 
   }, [reservation, attendablePeople]);
 
@@ -80,7 +79,7 @@ const TableCard: React.FC<TableCardProps> = ({
             {attendeeNameList.length > 0 && (
               <div className="mt-1">
                 <p className="text-xs text-gray-700">Comensals:</p> 
-                {attendeeNameList.map((name, index) => (
+                {attendeeNameList.map((name: string, index: number) => (
                   <div key={index} className="text-xs text-gray-700 ml-2 truncate" title={name}>- {name}</div> 
                 ))}
               </div>
@@ -138,18 +137,18 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
 }) => {
   const upcomingActiveDates = useMemo((): string[] => {
     const dates: string[] = [];
-    let currentDate = new Date();
+    let currentDate: Date = new Date(); 
     currentDate.setHours(0, 0, 0, 0); 
 
-    for (let i = 0; i < (MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING * 2) + 30 && dates.length < MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING; i++) {
-      const dateStrToTest = formatDateToYYYYMMDD(currentDate);
-      const dailyConf = dailyServiceConfig[dateStrToTest];
+    for (let i: number = 0; i < (MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING * 2) + 30 && dates.length < MAX_UPCOMING_DAYS_TO_SHOW_IN_BOOKING; i++) {
+      const dateStrToTest: string = formatDateToYYYYMMDD(currentDate);
+      const dailyConf: DailyServiceConfig[string] | undefined = dailyServiceConfig[dateStrToTest];
       
-      let isActiveToday = false;
+      let isActiveToday: boolean = false;
       if (dailyConf) { 
         isActiveToday = dailyConf.isActive;
       } else if (defaultConfig) { 
-        const dayOfWeek = currentDate.getDay();
+        const dayOfWeek: number = currentDate.getDay();
         isActiveToday = SUGGESTED_AVAILABLE_DAYS_OF_WEEK.includes(dayOfWeek);
       }
 
@@ -177,8 +176,8 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
 
 
   useEffect(() => {
-    let newSelectedDate = selectedDate;
-    let dateChanged = false;
+    let newSelectedDate: string = selectedDate;
+    let dateChanged: boolean = false;
 
     if (initialDate && upcomingActiveDates.includes(initialDate)) {
         if (newSelectedDate !== initialDate) {
@@ -204,14 +203,14 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
   const tablesForSelectedDate = useMemo(() => {
     if (!selectedDate) return [];
     
-    const dayConfigFromDaily = dailyServiceConfig[selectedDate];
+    const dayConfigFromDaily: Omit<DailyServiceDayConfig, 'date' | 'reservedSeatsCount' | 'reservationsOnDayCount'> | undefined = dailyServiceConfig[selectedDate];
     let tables: Table[];
 
     if (dayConfigFromDaily && dayConfigFromDaily.isActive) {
         tables = generateTablesForDay(selectedDate, dayConfigFromDaily, defaultConfig || undefined);
     } else if (!dayConfigFromDaily && defaultConfig) {
-        const dateObj = new Date(selectedDate + 'T00:00:00');
-        const dayOfWeek = dateObj.getDay();
+        const dateObj: Date = new Date(selectedDate + 'T00:00:00');
+        const dayOfWeek: number = dateObj.getDay();
         if (SUGGESTED_AVAILABLE_DAYS_OF_WEEK.includes(dayOfWeek)) {
             tables = generateTablesForDay(selectedDate, undefined, defaultConfig);
         } else {
@@ -221,8 +220,8 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
         tables = []; 
     }
     
-    return tables.map(table => {
-      const reservation = reservations.find(r => r.tableId === table.id && r.date === selectedDate);
+    return tables.map((table: Table): TableWithReservation => {
+      const reservation: Reservation | undefined = reservations.find(r => r.tableId === table.id && r.date === selectedDate);
       return { ...table, reservation };
     });
   }, [selectedDate, dailyServiceConfig, defaultConfig, reservations]);
@@ -232,21 +231,24 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
   };
 
   const handleBookTable = useCallback((tableId: string) => {
-    const tableData = tablesForSelectedDate.find(t => t.id === tableId);
+    const tableData: TableWithReservation | undefined = tablesForSelectedDate.find(t => t.id === tableId);
     if (tableData && selectedDate) {
-      onMakeReservation(tableData, selectedDate);
+      // onMakeReservation expects a Table, not TableWithReservation.
+      // We need to ensure we pass only the Table properties.
+      const { reservation, ...tableOnlyData } = tableData;
+      onMakeReservation(tableOnlyData, selectedDate);
     }
   }, [tablesForSelectedDate, selectedDate, onMakeReservation]);
 
   const handleEditExistingReservation = useCallback((tableId: string) => {
-     const tableData = tablesForSelectedDate.find(t => t.id === tableId);
+     const tableData: TableWithReservation | undefined = tablesForSelectedDate.find(t => t.id === tableId);
      if (tableData && tableData.reservation) {
         onEditReservation(tableData.reservation);
      }
   }, [tablesForSelectedDate, onEditReservation]);
 
   const handleDeleteExistingReservation = useCallback((tableId: string) => {
-    const tableData = tablesForSelectedDate.find(t => t.id === tableId);
+    const tableData: TableWithReservation | undefined = tablesForSelectedDate.find(t => t.id === tableId);
     if (tableData && tableData.reservation) {
       setReservationToDeleteId(tableData.reservation.id);
       setTableDetailsForDeletePrompt({ name: tableData.name, date: new Date(selectedDate + 'T00:00:00').toLocaleDateString('ca-ES')});
@@ -306,12 +308,15 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
     return <div className="min-h-screen flex items-center justify-center bg-gray-100"><p className="text-xl text-gray-600 animate-pulse">Carregant dates disponibles...</p></div>;
   }
 
-  const currentDayEffectiveConfig = selectedDate && dailyServiceConfig[selectedDate]?.isActive 
-                                  ? dailyServiceConfig[selectedDate]
-                                  : (selectedDate && defaultConfig && SUGGESTED_AVAILABLE_DAYS_OF_WEEK.includes(new Date(selectedDate + 'T00:00:00').getDay()) ? defaultConfig : null);
+  const currentDayEffectiveConfig: Pick<DailyServiceDayConfig, 'fourSeaterTables' | 'sixSeaterTables'> | Pick<DefaultRestaurantConfig, 'fourSeaterTables' | 'sixSeaterTables'> | null = 
+    selectedDate && dailyServiceConfig[selectedDate]?.isActive 
+      ? dailyServiceConfig[selectedDate]
+      : (selectedDate && defaultConfig && SUGGESTED_AVAILABLE_DAYS_OF_WEEK.includes(new Date(selectedDate + 'T00:00:00').getDay()) 
+          ? defaultConfig 
+          : null);
 
-  const numFourSeaters = currentDayEffectiveConfig?.fourSeaterTables || 0;
-  const numSixSeaters = currentDayEffectiveConfig?.sixSeaterTables || 0;
+  const numFourSeaters: number = currentDayEffectiveConfig?.fourSeaterTables || 0;
+  const numSixSeaters: number = currentDayEffectiveConfig?.sixSeaterTables || 0;
   const totalTablesForDay = tablesForSelectedDate.length;
 
   return (
@@ -343,7 +348,7 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
                   className="w-full md:w-auto pl-10 pr-4 py-2 border border-gray-400 rounded-md shadow-sm focus:ring-indigo-500 focus:border-indigo-600 text-gray-800 bg-white hover:bg-gray-50" 
                   aria-label="Selecciona una data"
                 >
-                  {upcomingActiveDates.map(dateStr => (
+                  {upcomingActiveDates.map((dateStr: string) => (
                     <option key={dateStr} value={dateStr}>
                       {new Date(dateStr + 'T00:00:00').toLocaleDateString('ca-ES', { weekday: 'long', month: 'long', day: 'numeric' })}
                     </option>
@@ -389,10 +394,10 @@ export const BookingSystem: React.FC<BookingSystemProps> = ({
 
           {selectedDate && tablesForSelectedDate.length > 0 ? (
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-              {tablesForSelectedDate.map(tableItem => (
+              {tablesForSelectedDate.map((tableItem: TableWithReservation) => (
                 <TableCard
                   key={tableItem.id}
-                  table={tableItem}
+                  table={{id: tableItem.id, capacity: tableItem.capacity, name: tableItem.name}} // Pass only Table properties
                   reservation={tableItem.reservation}
                   onBook={() => handleBookTable(tableItem.id)}
                   onEdit={() => handleEditExistingReservation(tableItem.id)}

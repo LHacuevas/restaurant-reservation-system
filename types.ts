@@ -1,6 +1,13 @@
+export enum UserRole {
+  CONSULTA = 'consulta',
+  GESTION = 'gestion',
+}
+
 export interface Person {
   id: string;
   name: string;
+  role?: UserRole;
+  email?: string; 
 }
 
 export enum TableType {
@@ -14,12 +21,17 @@ export interface Table {
   name: string; 
 }
 
+export interface AttendeeInfo {
+  personId: string;
+  attended: boolean;
+}
+
 export interface Reservation {
   id: string;
   tableId: string;
   date: string; // YYYY-MM-DD
   reservedById: string; 
-  attendeeIds: string[];
+  attendees: AttendeeInfo[]; // Changed from attendeeIds
   isClosedByUser: boolean; // User explicitly closed it
   notes?: string;
   cancellationReason?: string; // Opcional per futur
@@ -75,6 +87,8 @@ export interface ServiceDayConfiguratorProps {
   onSave: (updatedDailyConfigs: DailyServiceDayConfig[]) => void;
   onResetApp: () => void;
   addNotification: (type: 'success' | 'error' | 'info', message: string) => void;
+  reservablePeople: Person[];
+  attendablePeople: Person[];
 }
 
 // Props per NewReservationFinder
@@ -85,9 +99,6 @@ export interface NewReservationFinderProps {
   // Canviat per navegar a BookingSystem amb la data i els comensals
   onViewDayAvailability: (date: string, numGuests: number) => void; 
   addNotification: (type: 'success' | 'error' | 'info', message: string) => void;
-  // Aquests es podrien eliminar si no s'utilitzen directament al cercador
-  // reservablePeople: Person[]; 
-  // attendablePeople: Person[];
 }
 
 // Props per SearchReservations
@@ -126,7 +137,7 @@ export interface TableCardProps {
   onEdit: () => void;
   onDelete: () => void;
   reservablePeople: Person[];
-  attendablePeople: Person[]; // Afegit per mostrar noms d'assistents
+  attendablePeople: Person[];
 }
 
 export interface ConfirmationModalProps {
@@ -135,8 +146,12 @@ export interface ConfirmationModalProps {
   onConfirm: (reason: string) => void;
   title: string;
   message: string;
-  promptLabel?: string; // Etiqueta per al camp del motiu
-  showPrompt?: boolean; // Si es mostra o no el camp del motiu
+  promptLabel?: string; 
+  showPrompt?: boolean; 
   confirmButtonText?: string;
   cancelButtonText?: string;
+}
+
+export interface TableWithReservation extends Table {
+  reservation?: Reservation;
 }
