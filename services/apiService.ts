@@ -362,7 +362,7 @@ export const resetAllData = async (): Promise<void> => {
 //   // Aquesta funció hauria de ser injectada o gestionada per l'estat global de l'aplicació (com ja fas a App.tsx)
 //   console.log(`[Notification-${type}]: ${message}`);
 // };
-     */
+    
 
 // services/apiService.ts
 import { 
@@ -441,7 +441,7 @@ try {
 }
 };
 
-// --- Default Config ---
+/* // --- Default Config ---
 export const getDefaultConfig = async (): Promise<DefaultRestaurantConfigDto | null> => {
 try {
   const response = await fetch(`${API_BASE_URL}/config/default`, {
@@ -468,7 +468,7 @@ try {
   console.error("Error saving default config:", error);
   throw error;
 }
-};
+}; 
 
 // --- Daily Service Config ---
 // Note: The API returns DailyServiceDayConfigDto[], not DailyServiceConfig (Record object)
@@ -640,4 +640,6 @@ export const sendEmail = async (emailData: SendEmailDto): Promise<void> => { // 
 
 // The initializeSimulatedData function is no longer needed as we are moving to a real API.
 // It can be removed entirely.
-// export const initializeSimulatedData = () => { /* No longer needed */ };
+// export const initializeSimulatedData = () => {  No longer needed  };
+
+*/

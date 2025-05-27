@@ -300,8 +300,7 @@ export const ReservationModal: React.FC<ReservationModalProps> = ({
               </div>
             </form>
           </>
-        )}
-        {showEmailPreview && (
+        ) : showEmailPreview && (
           <div className="mt-4"> {/* Email preview content, appears within the same modal box */}
             <h3 className="text-lg font-semibold mb-3">Vista Prèvia del Correu</h3>
             <div 
