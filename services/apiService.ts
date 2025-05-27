@@ -1,4 +1,4 @@
-
+/* 
 import { Person, DefaultRestaurantConfig, DailyServiceConfig, Reservation, DailyServiceDayConfig } from '../types';
 
 // --- Constants for localStorage keys (used by simulator) ---
@@ -344,4 +344,282 @@ export const resetAllData = async (): Promise<void> => {
 //   // Aquesta funció hauria de ser injectada o gestionada per l'estat global de l'aplicació (com ja fas a App.tsx)
 //   console.log(`[Notification-${type}]: ${message}`);
 // };
-    
+     */
+
+// services/apiService.ts
+import { 
+  Person, 
+  DefaultRestaurantConfig, 
+  DailyServiceConfig, // This will likely change to DailyServiceDayConfigDto[] from API
+  Reservation, 
+  DailyServiceDayConfig,
+  UserRole // For UserDto if we define it here or import
+} from '../types';
+
+// Placeholder for DTOs that might differ slightly from internal types
+// For now, we'll cast or assume direct compatibility.
+type UserDto = Person & { role: UserRole }; // Example, adjust if Person already has role
+type ReservationDto = Reservation;
+type CreateReservationDto = Omit<Reservation, 'id' | 'attendees'> & { attendeePersonIds: string[] };
+type UpdateReservationDto = Partial<Omit<Reservation, 'id' | 'attendees'>> & { attendees?: { personId: string; attended: boolean }[] };
+type DefaultRestaurantConfigDto = DefaultRestaurantConfig;
+type DailyServiceDayConfigDto = DailyServiceDayConfig;
+type PersonDto = Person;
+type UpdateAttendanceDto = { attended: boolean };
+type AttendeeInfoDto = { personId: string; name?: string; attended: boolean };
+type SendEmailDto = { to: string; htmlBody: string; };
+
+
+const API_BASE_URL = '/api'; // Adjust if your API is hosted elsewhere
+
+const getAuthToken = (): string | null => {
+// In a real app, this would get the token from HttpOnly cookie, auth header manager, or localStorage
+return localStorage.getItem('authToken'); 
+};
+
+const handleResponse = async <T>(response: Response): Promise<T> => {
+if (response.status === 204) { // No Content
+  return null as T; // Or handle appropriately if T cannot be null
+}
+const contentType = response.headers.get("content-type");
+let data;
+if (contentType && contentType.indexOf("application/json") !== -1) {
+  data = await response.json();
+} else {
+  data = await response.text(); // Or handle as blob, etc.
+}
+
+if (!response.ok) {
+  const message = (data && data.message) || data || response.statusText;
+  throw new Error(message);
+}
+return data as T;
+};
+
+const buildHeaders = (includeContentType: boolean = true): HeadersInit => {
+const token = getAuthToken();
+const headers: HeadersInit = {};
+if (includeContentType) {
+  headers['Content-Type'] = 'application/json';
+}
+if (token) {
+  headers['Authorization'] = `Bearer ${token}`;
+}
+return headers;
+};
+
+// --- User ---
+export const getCurrentUser = async (): Promise<UserDto | null> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/user/me`, {
+    method: 'GET',
+    headers: buildHeaders(false),
+  });
+  if (response.status === 404) return null;
+  return handleResponse<UserDto>(response);
+} catch (error) {
+  console.error("Error fetching current user:", error);
+  throw error;
+}
+};
+
+// --- Default Config ---
+export const getDefaultConfig = async (): Promise<DefaultRestaurantConfigDto | null> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/config/default`, {
+    method: 'GET',
+    headers: buildHeaders(false),
+  });
+  if (response.status === 404) return null;
+  return handleResponse<DefaultRestaurantConfigDto>(response);
+} catch (error) {
+  console.error("Error fetching default config:", error);
+  throw error;
+}
+};
+
+export const saveDefaultConfig = async (config: DefaultRestaurantConfigDto): Promise<DefaultRestaurantConfigDto> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/config/default`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify(config),
+  });
+  return handleResponse<DefaultRestaurantConfigDto>(response);
+} catch (error) {
+  console.error("Error saving default config:", error);
+  throw error;
+}
+};
+
+// --- Daily Service Config ---
+// Note: The API returns DailyServiceDayConfigDto[], not DailyServiceConfig (Record object)
+export const getDailyServiceConfig = async (startDate?: string, endDate?: string): Promise<DailyServiceDayConfigDto[]> => {
+try {
+  const params = new URLSearchParams();
+  if (startDate) params.append('startDate', startDate);
+  if (endDate) params.append('endDate', endDate);
+  const response = await fetch(`${API_BASE_URL}/config/daily?${params.toString()}`, {
+    method: 'GET',
+    headers: buildHeaders(false),
+  });
+  return handleResponse<DailyServiceDayConfigDto[]>(response);
+} catch (error) {
+  console.error("Error fetching daily config:", error);
+  throw error;
+}
+};
+
+export const saveDailyServiceConfig = async (updatedDailyConfigsData: DailyServiceDayConfigDto[]): Promise<DailyServiceDayConfigDto[]> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/config/daily`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify(updatedDailyConfigsData),
+  });
+  return handleResponse<DailyServiceDayConfigDto[]>(response);
+} catch (error) {
+  console.error("Error saving daily config:", error);
+  throw error;
+}
+};
+
+// --- Reservations ---
+export const getReservations = async (filters?: { date?: string; month?: string; tableId?: string; userId?: string }): Promise<ReservationDto[]> => {
+try {
+  const params = new URLSearchParams();
+  if (filters?.date) params.append('date', filters.date);
+  if (filters?.month) params.append('month', filters.month);
+  if (filters?.tableId) params.append('tableId', filters.tableId);
+  if (filters?.userId) params.append('userId', filters.userId); // For admin use
+
+  const response = await fetch(`${API_BASE_URL}/reservations?${params.toString()}`, {
+    method: 'GET',
+    headers: buildHeaders(false),
+  });
+  return handleResponse<ReservationDto[]>(response);
+} catch (error) {
+  console.error("Error fetching reservations:", error);
+  throw error;
+}
+};
+
+export const getReservationById = async (id: string): Promise<ReservationDto | null> => {
+  try {
+      const response = await fetch(`${API_BASE_URL}/reservations/${id}`, {
+          method: 'GET',
+          headers: buildHeaders(false),
+      });
+      if (response.status === 404) return null;
+      return handleResponse<ReservationDto>(response);
+  } catch (error) {
+      console.error(`Error fetching reservation ${id}:`, error);
+      throw error;
+  }
+};
+
+export const addReservation = async (reservationData: CreateReservationDto): Promise<ReservationDto> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/reservations`, {
+    method: 'POST',
+    headers: buildHeaders(),
+    body: JSON.stringify(reservationData),
+  });
+  return handleResponse<ReservationDto>(response);
+} catch (error) {
+  console.error("Error adding reservation:", error);
+  throw error;
+}
+};
+
+export const updateReservation = async (id: string, reservationData: UpdateReservationDto): Promise<ReservationDto> => {
+try {
+  const response = await fetch(`${API_BASE_URL}/reservations/${id}`, {
+    method: 'PUT',
+    headers: buildHeaders(),
+    body: JSON.stringify(reservationData),
+  });
+  return handleResponse<ReservationDto>(response);
+} catch (error) {
+  console.error(`Error updating reservation ${id}:`, error);
+  throw error;
+}
+};
+
+export const deleteReservation = async (reservationId: string, reason?: string): Promise<void> => {
+try {
+  const params = new URLSearchParams();
+  if (reason) params.append('reason', reason);
+  const response = await fetch(`${API_BASE_URL}/reservations/${reservationId}?${params.toString()}`, {
+    method: 'DELETE',
+    headers: buildHeaders(false),
+  });
+  await handleResponse<void>(response); // Expects 204 No Content
+} catch (error) {
+  console.error(`Error deleting reservation ${reservationId}:`, error);
+  throw error;
+}
+};
+
+export const updateAttendeeAttendance = async (reservationId: string, personId: string, attendance: UpdateAttendanceDto): Promise<AttendeeInfoDto> => {
+  try {
+      const response = await fetch(`${API_BASE_URL}/reservations/${reservationId}/attendees/${personId}/attendance`, {
+          method: 'PUT',
+          headers: buildHeaders(),
+          body: JSON.stringify(attendance),
+      });
+      return handleResponse<AttendeeInfoDto>(response);
+  } catch (error) {
+      console.error(`Error updating attendance for person ${personId} in reservation ${reservationId}:`, error);
+      throw error;
+  }
+};
+
+
+// --- People ---
+export const fetchReservablePeople = async (search?: string, roleHint?: string): Promise<PersonDto[]> => {
+// This function might need to be renamed or adapted if "reservable" vs "attendable" distinction is purely client-side.
+// Assuming GET /api/people serves for both based on context or a query param.
+return getPeople(search, roleHint);
+};
+
+export const fetchAttendablePeople = async (search?: string, roleHint?: string): Promise<PersonDto[]> => {
+// Similar to fetchReservablePeople
+return getPeople(search, roleHint);
+};
+
+export const getPeople = async (search?: string, roleHint?: string): Promise<PersonDto[]> => {
+try {
+  const params = new URLSearchParams();
+  if (search) params.append('search', search);
+  if (roleHint) params.append('roleHint', roleHint); // If API supports this filter
+
+  const response = await fetch(`${API_BASE_URL}/people?${params.toString()}`, {
+    method: 'GET',
+    headers: buildHeaders(false),
+  });
+  return handleResponse<PersonDto[]>(response);
+} catch (error) {
+  console.error("Error fetching people:", error);
+  throw error;
+}
+};
+
+// --- Email ---
+export const sendEmail = async (emailData: SendEmailDto): Promise<void> => { // Assuming 202 Accepted, no significant body
+  try {
+      const response = await fetch(`${API_BASE_URL}/email/send`, {
+          method: 'POST',
+          headers: buildHeaders(),
+          body: JSON.stringify(emailData),
+      });
+      await handleResponse<void>(response); // Expects 202 Accepted
+  } catch (error) {
+      console.error("Error sending email:", error);
+      throw error;
+  }
+};
+
+// The initializeSimulatedData function is no longer needed as we are moving to a real API.
+// It can be removed entirely.
+// export const initializeSimulatedData = () => { /* No longer needed */ };
