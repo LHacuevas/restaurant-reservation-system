@@ -317,6 +317,8 @@ const App: React.FC = () => {
                   defaultConfig={defaultTableConfig} 
                   existingDailyConfig={dailyServiceConfig} 
                   reservations={reservations}
+                  reservablePeople={reservablePeople} 
+                  attendablePeople={attendablePeople} 
                   onSave={handleDailyServiceConfigSave} 
                   onResetApp={handleResetApp}
                   addNotification={addNotification}

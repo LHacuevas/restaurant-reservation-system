@@ -84,3 +84,9 @@ export const SearchIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className,
 );
 // NewBookingIcon (reutilitzem PlusCircleIcon, però podem donar-li un nom semàntic si cal)
 export { PlusCircleIcon as NewBookingIcon };
+
+export const PrinterIcon: React.FC<React.SVGProps<SVGSVGElement>> = ({ className, ...props }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20" fill="currentColor" className={className || "w-5 h-5"} {...props}>
+    <path fillRule="evenodd" d="M5 4v3H4a2 2 0 00-2 2v6a2 2 0 002 2h12a2 2 0 002-2V9a2 2 0 00-2-2h-1V4a2 2 0 00-2-2H7a2 2 0 00-2 2zm0 1a1 1 0 00-1 1v2h12V6a1 1 0 00-1-1H5zm10 7H5a1 1 0 000 2h10a1 1 0 000-2z" clipRule="evenodd" />
+  </svg>
+);
