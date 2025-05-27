@@ -16,6 +16,7 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
   addNotification,
 }) => {
   const [dailyConfigs, setDailyConfigs] = useState<DailyServiceDayConfig[]>([]);
+  const [selectedDayForDetails, setSelectedDayForDetails] = useState<DailyServiceDayConfig | null>(null);
 
   useEffect(() => {
     const today = new Date();
@@ -133,7 +134,19 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
           </div>
 
           <div className="space-y-6">
-            {dailyConfigs.map((config: DailyServiceDayConfig) => (
+            {dailyConfigs.map((config: DailyServiceDayConfig) => {
+              const reservationsInfo = config.isActive && (config.reservationsOnDayCount ?? 0) > 0 ? (
+                  (<span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
+                      <UsersIcon className="w-3 h-3 mr-1" />
+                      {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
+                  </span>)
+              ) : null;
+
+              const noReservationsInfo = config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) ? (
+                  (<span className="text-xs text-gray-600">Cap reserva</span>) /* Text lleugerament més fosc */
+              ) : null;
+
+              return (
               <div key={config.date} className={`p-4 rounded-md border ${config.isActive ? 'bg-green-50 border-green-300' : 'bg-gray-100 border-gray-300'}`}> {/* Fons i vores més visibles */}
                 <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center">
                   <div className="flex-grow">
@@ -144,15 +157,9 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                         <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${config.isActive ? 'bg-green-200 text-green-800' : 'bg-red-200 text-red-800'}`}> {/* Colors amb més contrast */}
                         {config.isActive ? 'Servei Actiu' : 'Servei Inactiu'}
                         </span>
-                        {config.isActive && (config.reservationsOnDayCount ?? 0) > 0 && (
-                             <span className="text-xs flex items-center text-blue-800 bg-blue-200 px-2 py-0.5 rounded-full"> {/* Colors amb més contrast */}
-                                <UsersIcon className="w-3 h-3 mr-1" />
-                                {config.reservationsOnDayCount} reserva(s) / {config.reservedSeatsCount} comensal(s)
-                            </span>
-                        )}
-                         {config.isActive && (config.reservationsOnDayCount === 0 || config.reservationsOnDayCount === undefined) && (
-                             <span className="text-xs text-gray-600">Cap reserva</span>
-                         )}
+
+                        {reservationsInfo}
+                        {noReservationsInfo}
                     </div>
                   </div>
                   <div className="mt-3 sm:mt-0 flex-shrink-0">
@@ -162,6 +169,14 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                       aria-label={config.isActive ? 'Desactivar servei per aquest dia' : 'Activar servei per aquest dia'}
                     >
                       {config.isActive ? <CheckCircleIcon className="w-5 h-5" /> : <XCircleIcon className="w-5 h-5" />}
+                    </button>
+                    <button
+                      onClick={() => setSelectedDayForDetails(config)}
+                      className="ml-2 p-2 rounded-full bg-blue-500 text-white hover:bg-blue-600"
+                      aria-label="Veure detalls del dia"
+                    >
+                      {/* Podrías usar un icono aquí si quieres, ej. <EyeIcon className="w-5 h-5" /> */}
+                      Detalls
                     </button>
                   </div>
                 </div>
@@ -193,8 +208,27 @@ export const ServiceDayConfigurator: React.FC<ServiceDayConfiguratorProps> = ({
                   </div>
                 )}
               </div>
-            ))}
+            );
+            })}
           </div>
+
+          {selectedDayForDetails && (
+            <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+              <div className="bg-white p-6 rounded-lg shadow-xl max-w-lg w-full">
+                <h2 className="text-xl font-bold mb-4">
+                  Detalls del Dia: {new Date(selectedDayForDetails.date + 'T00:00:00').toLocaleDateString('ca-ES', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
+                </h2>
+                {/* Aquí irá el contenido del DayDetailsModal */}
+                <p>Mesas y reservas aparecerán aquí...</p>
+                <button
+                  onClick={() => setSelectedDayForDetails(null)}
+                  className="mt-4 px-4 py-2 bg-gray-600 text-white rounded hover:bg-gray-700"
+                >
+                  Tancar
+                </button>
+              </div>
+            </div>
+          )}
 
           <div className="mt-8 pt-6 border-t border-gray-300 flex justify-end"> {/* Vora més visible */}
             <button
